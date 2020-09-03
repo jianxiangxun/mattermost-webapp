@@ -12,52 +12,37 @@
 import {getRandomId} from '../../utils';
 
 describe('Create bot', () => {
+    let testTeam;
+
     before(() => {
         cy.apiUpdateConfig({
             ServiceSettings: {
                 EnableBotAccountCreation: true,
             },
         });
-    });
-
-    it('MM-T1810 Create a Bot via the UI', () => {
-        cy.apiUpdateConfig({
-            ServiceSettings: {
-                EnableUserAccessTokens: true,
-            },
+        cy.apiInitSetup().then(({team}) => {
+            testTeam = team;
         });
-
-        createBot();
     });
 
-    it('MM-T1811 Create a Bot when personal access tokens are set to False', () => {
-        cy.apiUpdateConfig({
-            ServiceSettings: {
-                EnableUserAccessTokens: false,
-            },
-        });
-
-        createBot();
-    });
-});
-
-function createBot() {
-    cy.apiInitSetup().then(({team}) => {
-        // # go to bot integrations page
-        cy.visit(`/${team.name}/channels/town-square`);
+    function createBot(userName, displayName) {
+    // # go to bot integrations page
+        cy.visit(`/${testTeam.name}/channels/town-square`);
         cy.get('#headerInfo').click();
         cy.get('#integrations a').click();
         cy.get('a.integration-option[href$="/bots"]').click();
         cy.get('#addBotAccount').click();
 
         // # fill+submit form
-        cy.get('#username').type(`bot-${getRandomId()}`);
-        cy.get('#displayName').type('Test Bot');
+        cy.get('#username').type(userName);
+        if (displayName) {
+            cy.get('#displayName').type('Test Bot');
+        }
         cy.get('#saveBot').click();
 
         // * verify confirmation page
         cy.url().
-            should('include', `/${team.name}/integrations/confirm`).
+            should('include', `/${testTeam.name}/integrations/confirm`).
             should('match', /token=[a-zA-Z0-9]{26}/);
 
         // * verify confirmation form/token
@@ -67,5 +52,25 @@ function createBot() {
                 expect(confirmation.text()).to.match(/Token: [a-zA-Z0-9]{26}/);
             });
         cy.get('#doneButton').click();
+    }
+
+    it('MM-T1810 Create a Bot via the UI', () => {
+        cy.apiUpdateConfig({
+            ServiceSettings: {
+                EnableUserAccessTokens: true,
+            },
+        });
+
+        createBot(`bot-${getRandomId()}`, 'Test Bot');
     });
-}
+
+    it('MM-T1811 Create a Bot when personal access tokens are set to False', () => {
+        cy.apiUpdateConfig({
+            ServiceSettings: {
+                EnableUserAccessTokens: false,
+            },
+        });
+
+        createBot(`bot-${getRandomId()}`, 'Test Bot');
+    });
+});
