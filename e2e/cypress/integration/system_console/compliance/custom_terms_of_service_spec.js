@@ -51,6 +51,26 @@ describe('Custom Terms of Service', () => {
         cy.get('#acceptTerms').should('be.visible').click();
     });
 
+    it('MM-T1191 - Repeated edits must be agreed to', () => {
+        const otherTermsOfService = 'Different custom terms of service';
+
+        // # Login as admin and create new terms of service
+        cy.apiAdminLogin();
+        cy.apiCreateTermsOfService(otherTermsOfService).then(() => {
+            // # Login as the test user
+            cy.apiLogin(testUser);
+
+            // # Visit the test team town square
+            cy.visit(`/${testTeam.name}/channels/town-square`);
+
+            // * Ensure that the terms of service text shows as expected
+            cy.findByTestId('terms-of-service').should('be.visible').and('contain.text', otherTermsOfService);
+
+            // * Ensure that the accept terms button is visible and click it
+            cy.get('#acceptTerms').should('be.visible').click();
+        });
+    });
+
     after(() => {
         cy.apiAdminLogin();
 
