@@ -9,6 +9,7 @@
 
 // Group: @bot_accounts
 
+import * as TIMEOUTS from '../../fixtures/timeouts';
 import {getRandomId} from '../../utils';
 
 describe('Create bot', () => {
@@ -72,5 +73,60 @@ describe('Create bot', () => {
         });
 
         createBot(`bot-${getRandomId()}`, 'Test Bot');
+    });
+
+    it('MM-T1840 Description allows for special character', () => {
+        const userName = `bot-${getRandomId()}`;
+        const description = getRandomId(56).concat('!@#$%&*');
+        createBot(userName);
+
+        // * go to bots list
+        cy.get('.backstage-list__item').each(($el) => {
+            // # find list entry matching the created bot
+            if (($el.find('.item-details__name').text()).includes(userName)) {
+                const editLink = $el.find('.item-actions>a');
+                if (editLink.text() === 'Edit') {
+                    cy.wrap(editLink).click();
+
+                    // # check that user name is as expected
+                    cy.get('#username').should('have.value', userName);
+
+                    // # check that all details are empty
+                    cy.get('#displayName').should('have.value', '');
+                    cy.get('#description').should('have.value', '');
+
+                    // * set long description
+                    cy.get('#description').clear().type(description);
+
+                    // * click update button
+                    cy.get('#saveBot').click();
+
+                    // # retun early from `each` iteration
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        // # wait a little while after saving bot to return to bot list page
+        cy.wait(TIMEOUTS.TWO_SEC);
+
+        // * go to bots list
+        cy.get('.backstage-list__item').each(($el) => {
+            // # find list entry matching the created bot
+            if (($el.find('.item-details__name').text()).includes(userName)) {
+                cy.wrap($el).scrollIntoView();
+
+                // * confirm long description is as expected
+                cy.wrap($el.find('.bot-details__description')).should('have.text', description);
+
+                // * confirm bot profile image is visible.
+                cy.wrap($el.find('.bot-list-img')).should('be.visible');
+
+                // # retun early from `each` iteration
+                return false;
+            }
+            return true;
+        });
     });
 });
