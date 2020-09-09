@@ -202,10 +202,12 @@ var config = {
                             name: 'files/[hash].[ext]',
                         },
                     },
-                    {
-                        loader: 'image-webpack-loader',
-                        options: {},
-                    },
+                    // {
+                    //     loader: 'image-webpack-loader',
+                    //     options: {
+                    //         disable: true
+                    //     },
+                    // },
                 ],
             },
             {
@@ -427,13 +429,16 @@ if (targetIsDevServer) {
                     return '/static/root.html';
                 },
                 logLevel: 'silent',
-                target: 'http://localhost:8065',
+                // target: 'http://localhost:8065',
+                // target: 'https://pre-release.mattermost.com',
+                target: 'https://community.mattermost.com',
+                // target: 'https://demo.mattermost.com',
                 xfwd: true,
                 ws: true,
             }],
             port: 9005,
             watchContentBase: true,
-            writeToDisk: false,
+            writeToDisk: true,
         },
         performance: false,
         optimization: {
